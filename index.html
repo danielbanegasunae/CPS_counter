@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Click Speed Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      font-family: 'Segoe UI', sans-serif;
+      color: #f1f5f9;
+      gap: 3rem;
+      padding: 2rem;
+    }
+
+    /* ── Layout ── */
+    #main-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    h1 { font-size: 2rem; letter-spacing: 0.05em; color: #38bdf8; }
+
+    #click-btn {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      color: #fff;
+      font-size: 1.4rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+      transition: transform 0.08s, box-shadow 0.08s;
+      user-select: none;
+    }
+
+    #click-btn:active { transform: scale(0.93); box-shadow: 0 0 10px rgba(56,189,248,0.2); }
+    #click-btn:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; box-shadow: none; }
+
+    #timer-bar-container {
+      width: 300px;
+      height: 14px;
+      background: #1e293b;
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1px solid #334155;
+    }
+
+    #timer-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 99px;
+      transition: width 0.1s linear;
+    }
+
+    #stats {
+      display: flex;
+      gap: 2rem;
+      text-align: center;
+    }
+
+    .stat-box {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 1rem;
+      padding: 1rem 1.5rem;
+      min-width: 110px;
+    }
+
+    .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; }
+    .stat-value { font-size: 2rem; font-weight: bold; color: #38bdf8; margin-top: 0.25rem; }
+
+    #result {
+      font-size: 1.1rem;
+      color: #a78bfa;
+      min-height: 1.5rem;
+      text-align: center;
+    }
+
+    #reset-btn {
+      padding: 0.6rem 1.8rem;
+      border: none;
+      border-radius: 0.5rem;
+      background: #334155;
+      color: #f1f5f9;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #reset-btn:hover { background: #475569; }
+
+    /* ── Ranking Panel ── */
+    #ranking-panel {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 1.25rem;
+      padding: 1.5rem 1.25rem;
+      width: 220px;
+      align-self: flex-start;
+      margin-top: 0;
+    }
+
+    #ranking-panel h2 {
+      font-size: 1rem;
+      color: #38bdf8;
+      text-align: center;
+      margin-bottom: 1.2rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    #ranking-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    #ranking-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      padding: 0.55rem 0.85rem;
+      transition: border-color 0.3s;
+    }
+
+    #ranking-list li.new-entry {
+      border-color: #38bdf8;
+      animation: pulse-border 0.8s ease-out;
+    }
+
+    @keyframes pulse-border {
+      0%   { box-shadow: 0 0 0 0 rgba(56,189,248,0.5); }
+      70%  { box-shadow: 0 0 0 8px rgba(56,189,248,0); }
+      100% { box-shadow: none; }
+    }
+
+    .rank-medal {
+      font-size: 1.2rem;
+      width: 1.4rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .rank-cps {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #f1f5f9;
+      flex: 1;
+    }
+
+    .rank-clicks {
+      font-size: 0.72rem;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    #ranking-empty {
+      text-align: center;
+      color: #475569;
+      font-size: 0.85rem;
+      padding: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main tracker -->
+  <div id="main-panel">
+
+    <h1>⚡ Click Speed Tracker</h1>
+
+    <div id="stats">
+      <div class="stat-box">
+        <div class="stat-label">Clicks</div>
+        <div class="stat-value" id="count-display">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Tiempo</div>
+        <div class="stat-value" id="time-display">5.0s</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">CPS</div>
+        <div class="stat-value" id="cps-display">—</div>
+      </div>
+    </div>
+
+    <div id="timer-bar-container">
+      <div id="timer-bar"></div>
+    </div>
+
+    <button id="click-btn">¡CLICK!</button>
+
+    <p id="result"></p>
+
+    <button id="reset-btn">🔄 Reiniciar</button>
+
+  </div>
+
+  <!-- Ranking panel -->
+  <div id="ranking-panel">
+    <h2>🏆 Top 5 CPS</h2>
+    <ul id="ranking-list">
+      <li id="ranking-empty" style="border:none;background:none;">
+        <span id="ranking-empty">Sin resultados aún</span>
+      </li>
+    </ul>
+  </div>
+
+  <script>
+    const DURATION   = 5000;
+    const MAX_SCORES = 5;
+    const MEDALS     = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+
+    const btn          = document.getElementById('click-btn');
+    const resetBtn     = document.getElementById('reset-btn');
+    const countEl      = document.getElementById('count-display');
+    const timeEl       = document.getElementById('time-display');
+    const cpsEl        = document.getElementById('cps-display');
+    const resultEl     = document.getElementById('result');
+    const timerBar     = document.getElementById('timer-bar');
+    const rankingList  = document.getElementById('ranking-list');
+
+    let clicks    = 0;
+    let startTime = null;
+    let timerID   = null;
+    let rafID     = null;
+    let running   = false;
+
+    // { cps: number, totalClicks: number }[]  — sorted best-first
+    let scores = [];
+
+    function startSession() {
+      if (running) return;
+      running   = true;
+      clicks    = 1;
+      startTime = performance.now();
+      countEl.textContent  = clicks;
+      resultEl.textContent = '';
+      cpsEl.textContent    = '—';
+
+      timerID = setTimeout(endSession, DURATION);
+      updateLoop();
+    }
+
+    function updateLoop() {
+      const elapsed   = performance.now() - startTime;
+      const remaining = Math.max(0, DURATION - elapsed);
+      const pct       = (remaining / DURATION) * 100;
+
+      timerBar.style.width  = pct + '%';
+      timeEl.textContent    = (remaining / 1000).toFixed(1) + 's';
+
+      if (remaining > 0) rafID = requestAnimationFrame(updateLoop);
+    }
+
+    function endSession() {
+      running = false;
+      cancelAnimationFrame(rafID);
+      clearTimeout(timerID);
+
+      btn.disabled         = true;
+      timerBar.style.width = '0%';
+      timeEl.textContent   = '0.0s';
+
+      const cpsValue = parseFloat((clicks / (DURATION / 1000)).toFixed(2));
+      cpsEl.textContent    = cpsValue.toFixed(2);
+      resultEl.textContent = `✅ ${clicks} clicks en 5 s → ${cpsValue.toFixed(2)} clicks/segundo`;
+
+      addScore(cpsValue, clicks);
+    }
+
+    function addScore(cpsValue, totalClicks) {
+      scores.push({ cps: cpsValue, totalClicks });
+      scores.sort((a, b) => b.cps - a.cps);
+      if (scores.length > MAX_SCORES) scores = scores.slice(0, MAX_SCORES);
+      renderRanking(cpsValue);
+    }
+
+    function renderRanking(latestCps) {
+      rankingList.innerHTML = '';
+
+      scores.forEach((s, i) => {
+        const li = document.createElement('li');
+        const isNew = s.cps === latestCps;
+        if (isNew) li.classList.add('new-entry');
+
+        li.innerHTML = `
+          <span class="rank-medal">${MEDALS[i]}</span>
+          <span class="rank-cps">${s.cps.toFixed(2)} <small style="font-size:0.7rem;color:#94a3b8;">CPS</small></span>
+          <span class="rank-clicks">${s.totalClicks} clicks</span>
+        `;
+        rankingList.appendChild(li);
+      });
+    }
+
+    function reset() {
+      running = false;
+      cancelAnimationFrame(rafID);
+      clearTimeout(timerID);
+
+      clicks    = 0;
+      startTime = null;
+
+      btn.disabled         = false;
+      countEl.textContent  = 0;
+      timeEl.textContent   = '5.0s';
+      cpsEl.textContent    = '—';
+      resultEl.textContent = '';
+      timerBar.style.width = '100%';
+    }
+
+    btn.addEventListener('click', () => {
+      if (!running) startSession();
+      else {
+        clicks++;
+        countEl.textContent = clicks;
+      }
+    });
+
+    resetBtn.addEventListener('click', reset);
+  </script>
+</body>
+</html>
